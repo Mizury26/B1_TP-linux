@@ -22,27 +22,26 @@ Par "péter" on entend la rendre inutilisable :
 
 - VM 1 :
  on supprime le programme GRUP qui permet de faire démarrer la vm :
+```powershell
+cd /boot
 ```
-cd /run
-```
-```
-rm GRUB
+```powershell
+sudo rm -r grub2 -f
 ```
 - VM 2 :
  on supprime le shell bash ce qui empêche l'utilisateur de se connecter :
-```
+```powershell
 rm /usr/bin/bash
-
 ```
 - VM 3 :
  on créer un service qui éteint la VM dès son démarrage :
- ```
+ ```powershell
  cd /etc/systemd/system
 ```
-```
+```powershell
 sudo nano mtn.service
 ```
-```
+```powershell
 [Unit]
 Description=shutdown attack
 
@@ -50,14 +49,12 @@ Description=shutdown attack
 Type=simple
 ExecStart=/usr/sbin/shutdown
 
-
 [Install]
 WantedBy=multi-user.target
 ```
 
-
 - VM 4 :
  on remplit la partition du disque par des zéros ce qui le rend inutilisable :
-```
-sudo dd if=/dev/zero of=/dev/sga bs=4M
+```powershell
+sudo dd if=/dev/zero of=/dev/sda bs=4M
 ```
