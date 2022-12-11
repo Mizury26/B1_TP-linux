@@ -1,18 +1,9 @@
 # TP2 : Appréhender l'environnement Linux
 
-
-
-## Checklist
-
-
-
 # I. Service SSH
 
 
-
 ## 1. Analyse du service
-
-
 
 🌞 **S'assurer que le service `sshd` est démarré**
 
@@ -90,12 +81,6 @@ Dec  9 17:32:01 machine sudo[1280]: pam_unix(sudo:session): session closed for u
 ```
 
 ## 2. Modification du service
-
-Dans cette section, on va aller visiter et modifier le fichier de configuration du serveur SSH.
-
-Comme tout fichier de configuration, celui de SSH se trouve dans le dossier `/etc/`.
-
-Plus précisément, il existe un sous-dossier `/etc/ssh/` qui contient toute la configuration relative au protocole SSH
 
 🌞 **Identifier le fichier de configuration du serveur SSH**
 
@@ -249,14 +234,16 @@ Subsystem       sftp    /usr/libexec/openssh/sftp-server
     Port 1924
     #GatewayPorts no
 ```
-- gérer le firewall
-  - fermer l'ancien port
+- gérer le firewall :
+- fermer l'ancien port
 ```bash
   [manon@machine ssh]$ sudo firewall-cmd --remove-port=22/tcp --permanent
 Warning: NOT_ENABLED: 22:tcp
 success
 ```
-  - ouvrir le nouveau port
+
+- ouvrir le nouveau port
+
 ```bash
 [manon@machine ssh]$ sudo firewall-cmd --add-port=1924/tcp --permanent
 success
@@ -335,10 +322,8 @@ nginx      11112   11111  0 17:40 ?        00:00:00 nginx: worker process
 ```
 
 🌞 **Euh wait**
-
 ```bash
-Utilisateur@PC-Manon MINGW64 ~
-$ curl http://10.3.1.2:80 | head -n 7
+Utilisateur@PC-Manon MINGW64 ~$ curl http://10.3.1.2:80 | head -n 7
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
 100  7620  100  7620    0     0  1960k      0 --:--:-- --:--:-- --:--:-- 2480k
@@ -351,170 +336,285 @@ $ curl http://10.3.1.2:80 | head -n 7
     <style type="text/css">
 
 ```
+-> Le serveur tourne
 
 ## 2. Analyser la conf de NGINX
 
 🌞 **Déterminer le path du fichier de configuration de NGINX**
 
 ```bash
-[manon@machine ~]$ which nginx
-/usr/sbin/nginx
-[manon@machine ~]$ ls -al /usr/sbin/nginx
--rwxr-xr-x. 1 root root 1330200 Oct 31 16:37 /usr/sbin/nginx
+[manon@machine ~]$ sudo find /etc -iname nginx.conf
+[sudo] password for manon:
+/etc/nginx/nginx.conf
 ```
 
 🌞 **Trouver dans le fichier de conf**
 
-- les lignes qui permettent de faire tourner un site web d'accueil (la page moche que vous avez vu avec votre navigateur)
-  - ce que vous cherchez, c'est un bloc `server { }` dans le fichier de conf
-  - vous ferez un `cat <FICHIER> | grep <TEXTE> -A X` pour me montrer les lignes concernées dans le compte-rendu
-    - l'option `-A X` permet d'afficher aussi les `X` lignes après chaque ligne trouvée par `grep`
+- les lignes qui permettent de faire tourner un site web d'accueil
+```bash
+[manon@machine nginx]$ cat nginx.conf | grep server -A 15
+    server {
+        listen       80;
+        listen       [::]:80;
+        server_name  _;
+        root         /usr/share/nginx/html;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+    }
+```
 - une ligne qui parle d'inclure d'autres fichiers de conf
-  - encore un `cat <FICHIER> | grep <TEXTE>`
-  - bah ouais, on stocke pas toute la conf dans un seul fichier, sinon ça serait le bordel
+
+```bash
+[manon@machine nginx]$ cat nginx.conf | grep include
+include /usr/share/nginx/modules/*.conf;
+    include             /etc/nginx/mime.types;
+    # See http://nginx.org/en/docs/ngx_core_module.html#include
+    include /etc/nginx/conf.d/*.conf;
+        include /etc/nginx/default.d/*.conf;
+#        include /etc/nginx/default.d/*.conf;
+```
 
 ## 3. Déployer un nouveau site web
 
 🌞 **Créer un site web**
 
-- bon on est pas en cours de design ici, alors on va faire simplissime
-- créer un sous-dossier dans `/var/www/`
-  - par convention, on stocke les sites web dans `/var/www/`
-  - votre dossier doit porter le nom `tp2_linux`
-- dans ce dossier `/var/www/tp2_linux`, créez un fichier `index.html`
-  - il doit contenir `<h1>MEOW mon premier serveur web</h1>`
+```bash
+[manon@machine var]$ sudo mkdir www
+[sudo] password for manon:
+[manon@machine var]$ cd www
+[manon@machine www]$ sudo mkdir tp2_linux
+[manon@machine www]$ cd tp2_linux/
+[manon@machine tp2_linux]$ sudo touch index.html
+[manon@machine tp2_linux]$ sudo vim index.html
+ 1L, 38B written
+[manon@machine tp2_linux]$ cat index.html
+<h1>MEOW mon premier serveur web</h1>
+```
 
 🌞 **Adapter la conf NGINX**
 
 - dans le fichier de conf principal
   - vous supprimerez le bloc `server {}` repéré plus tôt pour que NGINX ne serve plus le site par défaut
-  - redémarrez NGINX pour que les changements prennent effet
-- créez un nouveau fichier de conf
-  - il doit être nommé correctement
-  - il doit être placé dans le bon dossier
-  - c'est quoi un "nom correct" et "le bon dossier" ?
-    - bah vous avez repéré dans la partie d'avant les fichiers qui sont inclus par le fichier de conf principal non ?
-    - créez votre fichier en conséquence
-  - redémarrez NGINX pour que les changements prennent effet
-  - le contenu doit être le suivant :
+```bash
+[manon@machine nginx]$ sudo vim nginx.conf
+```
+```bash
+[manon@machine nginx]$ cat nginx.conf | grep server -A 15
+# Settings for a TLS enabled server.
+#
+#    server {
+#        listen       443 ssl http2;
+#        listen       [::]:443 ssl http2;
+#        server_name  _;
+#        root         /usr/share/nginx/html;
+#
+#        ssl_certificate "/etc/pki/nginx/server.crt";
+#        ssl_certificate_key "/etc/pki/nginx/private/server.key";
+#        ssl_session_cache shared:SSL:1m;
+#        ssl_session_timeout  10m;
+#        ssl_ciphers PROFILE=SYSTEM;
+#        ssl_prefer_server_ciphers on;
+#
+#        # Load configuration files for the default server block.
+#        include /etc/nginx/default.d/*.conf;
+#
+#        error_page 404 /404.html;
+#            location = /40x.html {
+#        }
+#
+#        error_page 500 502 503 504 /50x.html;
+#            location = /50x.html {
+#        }
+#    }
 
-```nginx
+```
+  - redémarrez NGINX pour que les changements prennent effet
+```bash
+[manon@machine nginx]$ sudo systemctl restart nginx
+```
+
+- créez un nouveau fichier de conf
+```bash
+[manon@machine conf.d]$ sudo touch servernginx.conf
+```
+```bash
+[manon@machine conf.d]$ echo $RANDOM
+14209
+```
+```bash
+[manon@machine nginx]$ cat conf.d/servernginx.conf
 server {
-  # le port choisi devra être obtenu avec un 'echo $RANDOM' là encore
-  listen <PORT>;
+  listen 14209;
 
   root /var/www/tp2_linux;
 }
 ```
+```bash
+[manon@machine conf.d]$ sudo firewall-cmd --add-port=14209/tcp --permanent
+success
+[manon@machine conf.d]$ sudo firewall-cmd --remove-port=80/tcp --permanent
+success
+[manon@machine conf.d]$ sudo firewall-cmd --reload
+success
+```
+  - redémarrez NGINX pour que les changements prennent effet
+```bash
+[manon@machine nginx]$ sudo systemctl restart nginx
+```
 
 🌞 **Visitez votre super site web**
 
-- toujours avec une commande `curl` depuis votre PC (ou un navigateur)
+```bash
+[manon@machine nginx]$ curl http://10.3.1.2:14209
+<h1>MEOW mon premier serveur web</h1>
+```
 
 # III. Your own services
 
-Dans cette partie, on va créer notre propre service :)
 
-HE ! Vous vous souvenez de `netcat` ou `nc` ? Le ptit machin de notre premier cours de réseau ? C'EST L'HEURE DE LE RESORTIR DES PLACARDS.
+## 1. Analyse des services existants
 
-## 1. Au cas où vous auriez oublié
-
-Au cas où vous auriez oublié, une petite partie qui ne doit pas figurer dans le compte-rendu, pour vous remettre `nc` en main.
-
-➜ Dans la VM
-
-- `nc -l 8888`
-  - lance netcat en mode listen
-  - il écoute sur le port 8888
-  - sans rien préciser de plus, c'est le port 8888 TCP qui est utilisé
-
-➜ Allumez une autre VM vite fait
-
-- `nc <IP_PREMIERE_VM> 8888`
-- vérifiez que vous pouvez envoyer des messages dans les deux sens
-
-> Oubliez pas d'ouvrir le port 8888/tcp de la première VM bien sûr :)
-
-## 2. Analyse des services existants
-
-Un service c'est quoi concrètement ? C'est juste un processus, que le système lance, et dont il s'occupe après.
-
-Il est défini dans un simple fichier texte, qui contient une info primordiale : la commande exécutée quand on "start" le service.
-
-Il est possible de définir beaucoup d'autres paramètres optionnels afin que notre service s'exécute dans de bonnes conditions.
 
 🌞 **Afficher le fichier de service SSH**
 
 - vous pouvez obtenir son chemin avec un `systemctl status <SERVICE>`
+```bash
+[manon@machine ~]$ systemctl status sshd
+● sshd.service - OpenSSH server daemon
+     Loaded: loaded (/usr/lib/systemd/system/sshd.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sun 2022-12-11 17:41:07 CET; 7min ago
+       Docs: man:sshd(8)
+             man:sshd_config(5)
+   Main PID: 692 (sshd)
+      Tasks: 1 (limit: 2684)
+     Memory: 5.8M
+        CPU: 130ms
+     CGroup: /system.slice/sshd.service
+             └─692 "sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups"
+
+Dec 11 17:41:07 machine.lab.ingesup systemd[1]: Starting OpenSSH server daemon...
+Dec 11 17:41:07 machine.lab.ingesup sshd[692]: Server listening on 0.0.0.0 port 22.
+Dec 11 17:41:07 machine.lab.ingesup sshd[692]: Server listening on :: port 22.
+Dec 11 17:41:07 machine.lab.ingesup systemd[1]: Started OpenSSH server daemon.
+Dec 11 17:41:30 machine.lab.ingesup sshd[856]: Accepted password for manon from 10.3.1.1 port 49882 ssh2
+Dec 11 17:41:31 machine.lab.ingesup sshd[856]: pam_unix(sshd:session): session opened for user manon(uid=1000) by (uid=0)
+```
 - mettez en évidence la ligne qui commence par `ExecStart=`
-  - encore un `cat <FICHIER> | grep <TEXTE>`
-  - c'est la ligne qui définit la commande lancée lorsqu'on "start" le service
-    - taper `systemctl start <SERVICE>` ou exécuter cette commande à la main, c'est (presque) pareil
+```bash
+[manon@machine system]$ cat sshd.service | grep ExecStart
+ExecStart=/usr/sbin/sshd -D $OPTIONS
+```
+```bash
+[manon@machine system]$ sudo systemctl start sshd
+```
 
 🌞 **Afficher le fichier de service NGINX**
 
 - mettez en évidence la ligne qui commence par `ExecStart=`
+```bash
+[manon@machine system]$ cat nginx.service | grep ExecStart
+ExecStartPre=/usr/bin/rm -f /run/nginx.pid
+ExecStartPre=/usr/sbin/nginx -t
+ExecStart=/usr/sbin/nginx
+```
 
 ## 3. Création de service
 
-![Create service](./pics/create_service.png)
-
-Bon ! On va créer un petit service qui lance un `nc`. Et vous allez tout de suite voir pourquoi c'est pratique d'en faire un service et pas juste le lancer à la min.
-
-Ca reste un truc pour s'exercer, c'pas non plus le truc le plus utile de l'année que de mettre un `nc` dans un service n_n
 
 🌞 **Créez le fichier `/etc/systemd/system/tp2_nc.service`**
 
-- son contenu doit être le suivant (nice & easy)
-
-```service
+```bash
+[manon@machine system]$ echo $RANDOM
+7523
+```
+```bash
+[manon@machine system]$ sudo touch tp2_nc.service
+[manon@machine system]$ sudo vim tp2_nc.service
+[manon@machine system]$ cat tp2_nc.service
 [Unit]
 Description=Super netcat tout fou
 
 [Service]
-ExecStart=/usr/bin/nc -l <PORT>
+ExecStart=/usr/bin/nc -l 7523
 ```
-
-> Vous remplacerez `<PORT>` par un numéro de port random obtenu avec la même méthode que précédemment.
+```bash
+[manon@machine system]$ sudo firewall-cmd --add-port=7523/tcp --permanent
+success
+[manon@machine system]$ sudo firewall-cmd --reload
+success
+```
 
 🌞 **Indiquer au système qu'on a modifié les fichiers de service**
 
-- la commande c'est `sudo systemctl daemon-reload`
+```bash
+[manon@machine system]$ sudo systemctl daemon-reload
+```
 
 🌞 **Démarrer notre service de ouf**
 
-- avec une commande `systemctl start`
+```bash
+[manon@machine system]$ sudo systemctl start tp2_nc.service
+```
 
 🌞 **Vérifier que ça fonctionne**
 
 - vérifier que le service tourne avec un `systemctl status <SERVICE>`
+
+```bash
+[manon@machine system]$ sudo systemctl status tp2_nc.service
+● tp2_nc.service - Super netcat tout fou
+     Loaded: loaded (/etc/systemd/system/tp2_nc.service; static)
+     Active: active (running) since Sun 2022-12-11 18:03:01 CET; 1min 2s ago
+   Main PID: 1000 (nc)
+      Tasks: 1 (limit: 2684)
+     Memory: 784.0K
+        CPU: 2ms
+     CGroup: /system.slice/tp2_nc.service
+             └─1000 /usr/bin/nc -l 7523
+
+Dec 11 18:03:01 machine.lab.ingesup systemd[1]: Started Super netcat tout fou.
+```
 - vérifier que `nc` écoute bien derrière un port avec un `ss`
-  - vous filtrerez avec un `| grep` la sortie de la commande pour n'afficher que les lignes intéressantes
-- vérifer que juste ça marche en vous connectant au service depuis une autre VM
-  - allumez une autre VM vite fait et vous tapez une commande `nc` pour vous connecter à la première
-
-> **Normalement**, dans ce TP, vous vous connectez depuis votre PC avec un `nc` vers la VM, mais bon. Vos supers OS Windows/MacOS chient un peu sur les conventions de réseau, et ça marche pas super super en utilisant un `nc` directement sur votre machine. Donc voilà, allons au plus simple : allumez vite fait une deuxième qui servira de client pour tester la connexion à votre service `tp2_nc`.
-
-➜ Si vous vous connectez avec le client, que vous envoyez éventuellement des messages, et que vous quittez `nc` avec un CTRL+C, alors vous pourrez constater que le service s'est stoppé
-
-- bah oui, c'est le comportement de `nc` ça ! 
-- le client se connecte, et quand il se tire, ça ferme `nc` côté serveur aussi
-- faut le relancer si vous voulez retester !
+```bash
+[manon@machine system]$ sudo ss -lutmp | grep nc
+tcp   LISTEN 0      10           0.0.0.0:7523       0.0.0.0:*    users:(("nc",pid=1000,fd=4))
+tcp   LISTEN 0      10              [::]:7523          [::]:*    users:(("nc",pid=1000,fd=3))
+```
 
 🌞 **Les logs de votre service**
+```bash
+[manon@machine system]$ sudo journalctl -xe -u tp2_nc | grep Started
+Dec 11 18:03:01 machine.lab.ingesup systemd[1]: Started Super netcat tout fou.
 
-- mais euh, ça s'affiche où les messages envoyés par le client ? Dans les logs !
-- `sudo journalctl -xe -u tp2_nc` pour visualiser les logs de votre service
-- `sudo journalctl -xe -u tp2_nc -f ` pour visualiser **en temps réel** les logs de votre service
-  - `-f` comme follow (on "suit" l'arrivée des logs en temps réel)
-- dans le compte-rendu je veux
-  - une commande `journalctl` filtrée avec `grep` qui affiche la ligne qui indique le démarrage du service
-  - une commande `journalctl` filtrée avec `grep` qui affiche un message reçu qui a été envoyé par le client
-  - une commande `journalctl` filtrée avec `grep` qui affiche la ligne qui indique l'arrêt du service
+[manon@machine system]$ sudo journalctl -xe -u tp2_nc | grep hello
+Dec 11 18:18:13 machine.lab.ingesup nc[1083]: hello !!
+
+[manon@machine system]$ sudo journalctl -xe -u tp2_nc | grep Stopped
+Dec 11 18:17:29 machine.lab.ingesup systemd[1]: Stopped Super netcat tout fou.
+```
 
 🌞 **Affiner la définition du service**
 
 - faire en sorte que le service redémarre automatiquement s'il se termine
-  - comme ça, quand un client se co, puis se tire, le service se relancera tout seul
-  - ajoutez `Restart=always` dans la section `[Service]` de votre service
-  - n'oubliez pas d'indiquer au système que vous avez modifié les fichiers de service :)
+
+```bash
+[manon@machine system]$ cat /etc/systemd/system/tp2_nc.service
+[Unit]
+Description=Super netcat tout fou
+
+[Service]
+ExecStart=/usr/bin/nc -l 7523
+Restart=always
+```
+```bash
+[manon@machine system]$ sudo systemctl daemon-reload
+```
