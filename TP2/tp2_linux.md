@@ -2,7 +2,6 @@
 
 # I. Service SSH
 
-
 ## 1. Analyse du service
 
 🌞 **S'assurer que le service `sshd` est démarré**
