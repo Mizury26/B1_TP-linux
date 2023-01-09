@@ -1,186 +1,30 @@
 # TP 3 : We do a little scripting
 
-## Sommaire
-
-- [TP 3 : We do a little scripting](#tp-3--we-do-a-little-scripting)
-  - [Sommaire](#sommaire)
-- [0. Un premier script](#0-un-premier-script)
-- [I. Script carte d'identité](#i-script-carte-didentité)
-  - [Rendu](#rendu)
-- [II. Script youtube-dl](#ii-script-youtube-dl)
-  - [Rendu](#rendu-1)
-- [III. MAKE IT A SERVICE](#iii-make-it-a-service)
-  - [Rendu](#rendu-2)
-- [IV. Bonus](#iv-bonus)
-
-# 0. Un premier script
-
-➜ **Créer un fichier `test.sh` dans le dossier `/srv/` avec le contenu suivant** :
-
-```bash
-#!/bin/bash
-# Simple test script
-
-echo "Connecté actuellement avec l'utilisateur $(whoami)."
-```
-```bash
-[manon@tp3linux ~]$ cd /srv
-[manon@tp3linux srv]$ sudo touch test.sh
-[manon@tp3linux srv]$ sudo vim test.sh
-```
-```bash
-[manon@tp3linux srv]$ cat test.sh
-#!/bin/bash
-# Simple test script
-
-echo "Connecté actuellement avec l'utilisateur $(whoami)."
-```
-
-➜ **Modifier les permissions du script `test.sh`**
-
-- si c'est pas déjà le cas, faites en sorte qu'il appartienne à votre utilisateur
-  - 🐚 `chown`
-  ```bash
-    [manon@tp3linux srv]$ sudo chown manon test.sh
-    [sudo] password for manon:
-    [manon@tp3linux srv]$ ls -la
-    total 4
-    drwxr-xr-x.  2 root  root  21 Dec 29 12:35 .
-    dr-xr-xr-x. 18 root  root 235 Oct 13 11:04 ..
-    -rw-r--r--.  1 manon root  94 Dec 29 12:35 test.sh
-  ```
-- ajoutez la permission `x` pour votre utilisateur afin que vous puissiez exécuter le script
-  - 🐚 `chmod`
-  ```bash
-  [manon@tp3linux srv]$ chmod 744 test.sh
-  [manon@tp3linux srv]$ ll
-  total 4
-  -rwxr--r--. 1 manon root 94 Dec 29 12:35 test.sh
-  ```
-
-➜ **Exécuter le script** :
-
-```bash
-# Exécuter le script, peu importe le dossier où vous vous trouvez
-[manon@tp3linux ~]$ bash /srv/test.sh
-Connecté actuellement avec l'utilisateur manon.
-```
-```bash
-# Exécuter le script, depuis le dossier où il est stocké
-[manon@tp3linux srv]$ bash test.sh
-Connecté actuellement avec l'utilisateur manon.
-```
-
-# I. Script carte d'identité
-
-Vous allez écrire **un script qui récolte des informations sur le système et les affiche à l'utilisateur.** Il s'appellera `idcard.sh` et sera stocké dans `/srv/idcard/idcard.sh`.
-
-> `.sh` est l'extension qu'on donne par convention aux scripts réalisés pour être exécutés avec `sh` ou `bash`.
-
-➜ **Testez les commandes à la main avant de les incorporer au script.**
-
-➜ Ce que doit faire le script. Il doit afficher :
-
-- le **nom de la machine**
-  - 🐚 `hostnamectl`
-
-  ```
-  [manon@tp3linux idcard]$ hostnamectl hostname
-  ```
-- le **nom de l'OS** de la machine
-  - regardez le fichier `/etc/redhat-release` ou `/etc/os-release`
-  - 🐚 `source`
-
-  ```
-   cat /etc/os-release | head -n 2
-  ``` 
-- la **version du noyau** Linux utilisé par la machine
-  - 🐚 `uname`
-
-  ```
-  [manon@tp3linux idcard]$ uname -r
-  5.14.0-70.26.1.el9_0.x86_64
-  ```
-- l'**adresse IP** de la machine
-  - 🐚 `ip`
-  ```
-  [manon@tp3linux idcard]$ ip a | grep enp0s8 | grep inet | tr -s ' ' | cut -d'/' -f1 | cut -d ' ' -f3
-  10.3.1.5
-  ```
-
-- l'**état de la RAM**
-  - 🐚 `free`
-
-  - espace dispo en RAM (en Go, Mo, ou Ko)
-  ```
-  [manon@tp3linux idcard]$ free -h | grep Mem | tr -s ' ' | cut -d ' ' -f4
-  201Mi
-  [manon@tp3linux idcard]$ free -h | grep Mem | tr -s ' ' | cut -d ' ' -f2
-  457Mi
-  ```
-  - taille totale de la RAM (en Go, Mo, ou ko)
-- l'**espace restant sur le disque dur**, en Go (ou Mo, ou ko)
-  - 🐚 `df`
-  ```
-   df -h | grep ' /$' |tr -s ' ' | cut -d' ' -f4
-   ```
-
-- le **top 5 des processus** qui pompent le plus de RAM sur la machine actuellement. Procédez par étape :
-  - 🐚 `ps`
-  
-  - listez les process
-  - affichez la RAM utilisée par chaque process
-  - triez par RAM utilisée
-  - isolez les 5 premiers
-
-  ```bash
-  [manon@tp3linux ~]$ ps -e -o cmd=--sort=-%mem | head -n 7 | tail -n 5
-  ```
-- la **liste des ports en écoute** sur la machine, avec le programme qui est derrière
-  - préciser, en plus du numéro, s'il s'agit d'un port TCP ou UDP
-  - 🐚 `ss`
-  ```bash
-  $ sudo ss -lutnpr4H | tr -s ' ' | cut -d' ' -f1
-  $ sudo ss -lutnpr4H | tr -s ' ' | cut -d' ' -f5 | cut -d':' -f2
-  $ sudo ss -lutnpr4H | tr -s ' ' | cut -d' ' -f7 | cut -d'"' -f2
-  ```
-- un **lien vers une image/gif** random de chat 
-  - 🐚 `curl`
-
-  - il y a de très bons sites pour ça hihi
-  - avec [celui-ci](https://cataas.com/), une simple requête HTTP vers `https://cataas.com/cat` vous retourne l'URL d'une random image de chat
-    - une requête sur cette adresse retourne directement l'image, il faut l'enregistret dans un fichier
-    - parfois le fichier est un JPG, parfois un PNG, parfois même un GIF
-    - 🐚 `file` peut vous aider à déterminer le type de fichier
-
-Pour vous faire manipuler les sorties/entrées de commandes, votre script devra sortir **EXACTEMENT** :
-
-```
-$ /srv/idcard/idcard.sh
-Machine name : ...
-OS ... and kernel version is ...
-IP : ...
-RAM : ... memory available on ... total memory
-Disk : ... space left
-Top 5 processes by RAM usage :
-  - ...
-  - ...
-  - ...
-  - ...
-  - ...
-Listening ports :
-  - 22 tcp : sshd
-  - ...
-  - ...
-
-Here is your random cat : ./cat.jpg
-```
-
 ## Rendu
 
 📁 **Fichier `/srv/idcard/idcard.sh`**
 
 🌞 **Vous fournirez dans le compte-rendu**, en plus du fichier, **un exemple d'exécution avec une sortie**, dans des balises de code.
+
+```bash
+[manon@tp3linux idcard]$ sudo bash idcard.sh
+Machine name : tp3linux.lab.ingesup
+OS Rocky Linux and kernel version is 5.14.0-70.26.1.el9_0.x86_64
+IP : 10.3.1.5
+RAM : 87Mi memory available on 457Mi total memory
+Disk : 5.1G space left
+Top 5 processes by RAM usage :
+- /usr/bin/python3
+- /usr/sbin/NetworkManager
+- /usr/lib/systemd/systemd
+- /usr/lib/systemd/systemd
+- sshd:
+Listening ports :
+- 323 udp : chronyd
+- 80 tcp : httpd
+- 22 tcp : sshd
+Here is your random cat : cat.png
+```
 
 # II. Script youtube-dl
 
