@@ -8,16 +8,16 @@ echo "Top 5 processes by RAM usage :"
 processes="$(ps -e -o cmd= --sort=-%mem | head -n5 | cut -d' ' -f1)"
 while read line
 do
-echo "- ${line}"
+echo "- $line"
 done <<< "${processes}"
 echo "Listening ports :"
 while read line ; do
 
-  port="$(echo ${line} |tr -s " " | cut -d' ' -f5 | cut -d":" -f2)"
-  service="$(echo ${line} | cut -d'"' -f2)"
-  protocole="$(echo ${line} | cut -d' ' -f1)"
+  port="$(echo $line |tr -s " " | cut -d' ' -f5 | cut -d":" -f2)"
+  service="$(echo $line | cut -d'"' -f2)"
+  protocole="$(echo $line | cut -d' ' -f1)"
 
-echo "- ${port} ${protocole} : ${service}"
+echo "- $port $protocole : $service"
 done <<< "$(ss -alnpH4)"
 curl https://cataas.com/cat --output cat 2> /dev/null
 cat_name='cat'
