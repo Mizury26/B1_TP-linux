@@ -1,0 +1,10 @@
+[Unit]
+Description=Script to download a list of Youtube url with Youtube-dl 
+
+[Service]
+ExecStart=/bin/bash /srv/yt/yt-v2.sh
+User=yt
+
+
+[Install]
+WantedBy=multi-user.target

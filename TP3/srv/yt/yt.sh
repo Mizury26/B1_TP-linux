@@ -1,6 +1,6 @@
 #!/bin/bash
 #11/01/2023
-##Youtube-dl script by manon
+#Youtube-dl script by manon
 if [ ! -d $"/srv/yt/downloads" ]; then
 echo "no directory named /srv/yt/downloads"
 exit 1

@@ -28,67 +28,6 @@ Here is your random cat : cat.png
 
 # II. Script youtube-dl
 
-**Un petit script qui télécharge des vidéos Youtube.** Vous l'appellerez `yt.sh`. Il sera stocké dans `/srv/yt/yt.sh`.
-
-**Pour ça on va avoir besoin d'une commande : `youtube-dl`.** Je vous laisse vous référer [à la doc officielle](https://github.com/ytdl-org/youtube-dl/blob/master/README.md#readme) pour voir comment récupérer cette commande sur votre machine.
-
-Comme toujours, **PRENEZ LE TEMPS** de manipuler la commande et d'explorer un peu le `youtube-dl --help`.
-
-Le contenu de votre script :
-
-➜ **1. Permettre le téléchargement d'une vidéo youtube dont l'URL est passée au script**
-
-- la vidéo devra être téléchargée dans le dossier `/srv/yt/downloads/`
-  - le script doit s'assurer que ce dossier existe sinon il quitte
-  - vous pouvez utiliser la commande `exit` pour que le script s'arrête
-- plus précisément, chaque téléchargement de vidéo créera un dossier
-  - `/srv/yt/downloads/<NOM_VIDEO>`
-  - il vous faudra donc, avant de télécharger la vidéo, exécuter une commande pour récupérer son nom afin de créer le dossier en fonction
-- la vidéo sera téléchargée dans
-  - `/srv/yt/downloads/<NOM_VIDEO>/<NOM_VIDEO>.mp4`
-- la description de la vidéo sera aussi téléchargée
-  - dans `/srv/yt/downloads/<NOM_VIDEO>/description`
-  - on peut récup la description avec une commande `youtube-dl`
-- la commande `youtube-dl` génère du texte dans le terminal, ce texte devra être masqué
-  - vous pouvez utiliser une redirection de flux vers `/dev/null`, c'est ce que l'on fait généralement pour se débarasser d'une sortie non-désirée
-
-Il est possible de récupérer les arguments passés au script dans les variables `$1`, `$2`, etc.
-
-```bash
-$ cat script.sh
-echo $1
-
-$ ./script.sh toto
-toto
-```
-
-➜ **2. Le script produira une sortie personnalisée**
-
-- utilisez la commande `echo` pour écrire dans le terminal
-- la sortie **DEVRA** être comme suit :
-
-```bash
-$ /srv/yt/yt.sh https://www.youtube.com/watch?v=sNx57atloH8
-Video https://www.youtube.com/watch?v=sNx57atloH8 was downloaded. 
-File path : /srv/yt/downloads/tomato anxiety/tomato anxiety.mp4`
-```
-
-➜ **3. A chaque vidéo téléchargée, votre script produira une ligne de log dans le fichier `/var/log/yt/download.log`**
-
-- votre script doit s'assurer que le dossier `/var/log/yt/` existe, sinon il refuse de s'exécuter
-- la ligne doit être comme suit :
-
-```
-[yy/mm/dd hh:mm:ss] Video <URL> was downloaded. File path : <PATH>`
-```
-
-Par exemple :
-
-```
-[21/11/12 13:22:47] Video https://www.youtube.com/watch?v=sNx57atloH8 was downloaded. File path : /srv/yt/downloads/tomato anxiety/tomato anxiety.mp4`
-```
-
-> Hint : La commande `date` permet d'afficher la date et de choisir à quel format elle sera affichée. Idéal pour générer des logs. [J'ai trouvé ce lien](https://www.geeksforgeeks.org/date-command-linux-examples/), premier résultat google pour moi, y'a de bons exemples (en bas de page surtout pour le formatage de la date en sortie).
 
 ## Rendu
 
@@ -97,6 +36,12 @@ Par exemple :
 📁 **Le fichier de log `/var/log/yt/download.log`**, avec au moins quelques lignes
 
 🌞 Vous fournirez dans le compte-rendu, en plus du fichier, **un exemple d'exécution avec une sortie**, dans des balises de code.
+
+```bash
+[manon@tp3linux yt]$ ./yt.sh 'https://www.youtube.com/watch?v=PCicKydX5GE'
+Video https://www.youtube.com/watch?v=PCicKydX5GE was downloaded.
+File path : /srv/yt/downloads/3 Second Video/3 Second Video.mp4
+```
 
 # III. MAKE IT A SERVICE
 

@@ -1,0 +1,7 @@
+```bash
+[manon@tp3linux yt]$ cat download.log
+[23/01/11 22:01:25] Video One Second Video was downloaded. File path : /srv/yt/downloads/One Second Video/One Second Video.mp4
+[23/01/11 22:02:06] Video 1 sec VIDEO was downloaded. File path : /srv/yt/downloads/1 sec VIDEO/1 sec VIDEO.mp4
+[23/01/11 22:42:10] Video 1 second black screen video was downloaded. File path : /srv/yt/downloads/1 second black screen video/1 second black screen video.mp4
+[23/01/11 22:42:40] Video 3 Second Video was downloaded. File path : /srv/yt/downloads/3 Second Video/3 Second Video.mp4
+```
