@@ -2,11 +2,9 @@
 #11/01/2023
 #Script to download a list of Youtube url with Youtube-dl by manon
 
-url="${1}"
-video_name=$(youtube-dl "$url" -e 2>/dev/null)
-url_list="/srv/yt/url_list.txt"
-
 download() {
+    url="${1}"
+    video_name=$(youtube-dl "$url" -e 2>/dev/null)
     mkdir /srv/yt/downloads/"${video_name}"
     youtube-dl "${url}" --output "/srv/yt/downloads/${video_name}/${video_name}.mp4" >/dev/null
     touch /srv/yt/downloads/"${video_name}"/description
@@ -27,16 +25,17 @@ fi
 
 while true
 do
+url_list="/srv/yt/url_list.txt"
     while read -r file
     do
-        if [[ -ne "${file}" ]]; then
-            if echo "${file}" | grep -q "https://www.youtube.com"; then
+        if [ -n ${file} ]; then
+            if echo "${file}" | grep "https://www.youtube.com" >/dev/null; then
                 download "${file}"
             else
-                echo "not a youtube url"
+                echo "not a youtube url" >/dev/null
             fi
-            sed -i '1d' ${url_list}
+            sed -i '1d' ${url_list} >/dev/null
         fi
     sleep 5
-    done <<< "$(cat "${url_list}")"
+    done < "${url_list}"
 done
