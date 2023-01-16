@@ -857,22 +857,60 @@ success
 
 🌞 **Créez le fichier de configuration pour le premier site**
 
-- le bloc `server` du fichier de conf principal, vous le sortez
-- et vous le mettez dans un fichier dédié
-- ce fichier dédié doit se trouver dans le dossier `conf.d`
-- ce fichier dédié doit porter un nom adéquat : `site_web_1.conf`
+```bash
+[manon@webtp4linux conf.d]$ cat site_web_1.conf
+server {
+        listen       8080;
+        listen       [::]:8080;
+        server_name  _;
+        root         /var/www/site_web_1/;
+
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
+
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+    }
+```
 
 🌞 **Créez le fichier de configuration pour le deuxième site**
+  ```[manon@webtp4linux site_web_2]$ sudo touch index.html
+  [manon@webtp4linux site_web_2]$ sudo nano index.html
+  [manon@webtp4linux site_web_2]$ cat index.html
+  hello je suis le site n.2 !!
+  ```
+```bash
+[manon@webtp4linux conf.d]$ cat site_web_2.conf
+server {
+        listen       8888;
+        listen       [::]:8888;
+        server_name  _;
+        root         /var/www/site_web_2/;
 
-- un nouveau fichier dans le dossier `conf.d`
-- il doit porter un nom adéquat : `site_web_2.conf`
-- copiez-collez le bloc `server { }` de l'autre fichier de conf
-- changez la racine web vers `/var/www/site_web_2/`
-- et changez le port d'écoute pour 8888
+        # Load configuration files for the default server block.
+        include /etc/nginx/default.d/*.conf;
 
-> N'oubliez pas d'ouvrir le port 8888 dans le firewall. Vous pouvez constater si vous le souhaitez avec un `ss` que NGINX écoute bien sur ce nouveau port.
+        error_page 404 /404.html;
+        location = /404.html {
+        }
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+        }
+    }
+```
 
 🌞 **Prouvez que les deux sites sont disponibles**
 
 - depuis votre PC, deux commandes `curl`
-- pour choisir quel site visitez, vous choisissez un port spécifique
+  ```bash
+  [manon@webtp4linux www]$ curl http://10.3.2.5:8080
+  contenu bidon
+  [manon@webtp4linux www]$ curl http://10.3.2.5:8888
+  hello je suis le site n.2 !!
+  ```

@@ -27,4 +27,4 @@ L'objectif :
 
 > Je vous laisse vous inspirer de docs sur internet **[comme celle-ci](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-rocky-linux-9)** pour mettre en place un serveur NFS.
 
-**Ok, on a fini avec la partie 2, let's head to [the part 3](./../part3/README.md).**
+**Ok, on a fini avec la partie 2, let's head to [the part 3](tp4_linux_p2.md).**
