@@ -55,7 +55,7 @@ enabled = true
 port    = ssh
 logpath = %(sshd_log)s
 backend = %(sshd_backend)s
-``
+```
 - On démarre le service :
 
 ```bash
@@ -90,7 +90,7 @@ manon@10.105.1.11: Permission denied (publickey,gssapi-keyex,gssapi-with-mic,pas
 [manon@db-tp6-linux ~]$ ssh manon@10.105.1.11
 ssh: connect to host 10.105.1.11 port 22: Connection refused
 ```
-- On peut lister les IPs qui on etaient ban avec la commande :
+- On peut lister les IPs qui on étaient ban avec la commande :
 ```bash
 [manon@web-tp6-linux fail2ban]$ sudo fail2ban-client status sshd
 Status for the jail: sshd

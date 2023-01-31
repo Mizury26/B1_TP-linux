@@ -19,11 +19,11 @@ L'objectif :
 
 🌞 **Donnez les commandes réalisées sur le serveur NFS `storage.tp4.linux`**
 
-- contenu du fichier `/etc/exports` dans le compte-rendu notamment
+- contenu du fichier [/etc/exports](./etc/exports.md) dans le compte-rendu notamment
 
 🌞 **Donnez les commandes réalisées sur le client NFS `web.tp4.linux`**
 
-- contenu du fichier `/etc/fstab` dans le compte-rendu notamment
+- contenu du fichier [/etc/fstab](./etc/fstab.md) dans le compte-rendu notamment
 
 > Je vous laisse vous inspirer de docs sur internet **[comme celle-ci](https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nfs-mount-on-rocky-linux-9)** pour mettre en place un serveur NFS.
 
