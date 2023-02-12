@@ -374,22 +374,18 @@
 
 🌞 **Configurer NGINX**
 
-- nous ce qu'on veut, c'pas une page d'accueil moche, c'est que NGINX agisse comme un reverse proxy entre les clients et notre serveur Web
+- nous ce qu'on veut, c'est que NGINX agisse comme un reverse proxy entre les clients et notre serveur Web
 - deux choses à faire :
   - créer un fichier de configuration NGINX
-    - la conf est dans `/etc/nginx`
-    - procédez comme pour Apache : repérez les fichiers inclus par le fichier de conf principal, et créez votre fichier de conf en conséquence
-  - NextCloud est un peu exigeant, et il demande à être informé si on le met derrière un reverse proxy
-    - y'a donc un fichier de conf NextCloud à modifier
-    - c'est un fichier appelé `config.php`
-    - la clause à modifier dans ce fichier est `trusted_domains`
-
-Référez-vous à monsieur Google pour tout ça :)
-
-Exemple de fichier de configuration minimal NGINX.:
-
-```nginx
-server {
+    - repérez les fichiers inclus par le fichier de conf principal, et créez votre fichier de conf en conséquence
+    ```bash
+    [manon@proxy-tp6-linux nginx]$ cat nginx.conf | grep include
+    include /etc/nginx/conf.d/*.conf;
+    ```
+    ```bash
+    [manon@proxy-tp6-linux conf.d]$ sudo vim rproxy.conf
+    [manon@proxy-tp6-linux conf.d]$ cat rproxy.conf
+    server {
     # On indique le nom que client va saisir pour accéder au service
     # Pas d'erreur ici, c'est bien le nom de web, et pas de proxy qu'on veut ici !
     server_name www.nextcloud.tp6;
@@ -405,7 +401,7 @@ server {
         proxy_set_header  X-Forwarded-Host $remote_addr;
         proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
 
-        # On définit la cible du proxying 
+        # On définit la cible du proxying
         proxy_pass http://<IP_DE_NEXTCLOUD>:80;
     }
 
@@ -416,38 +412,101 @@ server {
 
     location /.well-known/caldav {
       return 301 $scheme://$host/remote.php/dav;
+      }
     }
-}
-```
+    ```
+  - NextCloud est un peu exigeant, et il demande à être informé si on le met derrière un reverse proxy
+    - y'a donc un fichier de conf NextCloud à modifier
+    - c'est un fichier appelé `config.php`
+    - la clause à modifier dans ce fichier est `trusted_domains`
+     ```bash
+     [manon@web-tp6-linux config]$ sudo cat config.php
+    <?php
+    $CONFIG = array (
+      'instanceid' => 'oc465yg1dcim',
+      'passwordsalt' => 'xaDNsJJ0ZomQ9fs9bGq73M5NLP6L6Z',
+      'secret' => 'c7MliOl2pFevAmIxHJ9o2zUEDcCgopi642Yhf9cdhoXK0    +f/',
+      'trusted_domains' =>
+      array (
+              0 => 'web.tp5.linux',
+              1 => '10.105.1.13',
+      ),
+      'datadirectory' => '/var/www/tp5_nextcloud/data',
+      'dbtype' => 'mysql',
+      'version' => '25.0.0.15',
+      'overwrite.cli.url' => 'http://web.tp6.linux',
+      'dbname' => 'nextcloud',
+      'dbhost' => '10.105.1.12',
+      'dbport' => '',
+      'dbtableprefix' => 'oc_',
+      'mysql.utf8mb4' => true,
+      'dbuser' => 'nextcloud',
+      'dbpassword' => 'pewpewpew',
+      'installed' => true,
+    );
+    ```
 
 ➜ **Modifier votre fichier `hosts` de VOTRE PC**
 
-- pour que le service soit joignable avec le nom `www.nextcloud.tp6`
-- c'est à dire que `www.nextcloud.tp6` doit pointer vers l'IP de `proxy.tp6.linux`
-- autrement dit, pour votre PC :
   - `www.nextcloud.tp6` pointe vers l'IP du reverse proxy
   - `proxy.tp6.linux` ne pointe vers rien
   - taper `http://www.nextcloud.tp6` permet d'accéder au site (en passant de façon transparente par l'IP du proxy)
 
-> Oui vous ne rêvez pas : le nom d'une machine donnée pointe vers l'IP d'une autre ! Ici, on fait juste en sorte qu'un certain nom permette d'accéder au service, sans se soucier de qui porte réellement ce nom.
+```bash
+Manon@PC-Manon MINGW64 /c/Windows/System32/drivers/etc
+$ cat hosts
+10.105.1.11 web-tp6-linux
+10.105.1.12 db-tp6-linux
+10.105.1.13 www.nextcloud.tp6
+```
 
 🌞 **Faites en sorte de**
 
 - rendre le serveur `web.tp6.linux` injoignable
 - sauf depuis l'IP du reverse proxy
 - en effet, les clients ne doivent pas joindre en direct le serveur web : notre reverse proxy est là pour servir de serveur frontal
-- **comment ?** Je vous laisser là encore chercher un peu par vous-mêmes (hint : firewall)
+
+```bash
+[manon@web-tp6-linux ~]$ sudo firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source address="10.105.1.13" accept'
+success
+[manon@web-tp6-linux ~]$ sudo firewall-cmd --permanent --zone=public --add-rich-rule='rule family="ipv4" source not address="10.105.1.13" reject'
+success
+[manon@web-tp6-linux ~]$ sudo firewall-cmd --reload
+success
+```
 
 🌞 **Une fois que c'est en place**
 
 - faire un `ping` manuel vers l'IP de `proxy.tp6.linux` fonctionne
-- faire un `ping` manuel vers l'IP de `web.tp6.linux` ne fonctionne pas
+    ```bash
+    PS C:\Users\Utilisateur> ping 10.105.1.13
 
-![Not sure](../pics/reverse_proxy.png)
+    Envoi d’une requête 'Ping'  10.105.1.13 avec 32 octets de données :
+    Réponse de 10.105.1.13 : octets=32 temps<1ms TTL=64
+    Réponse de 10.105.1.13 : octets=32 temps<1ms TTL=64
+    Réponse de 10.105.1.13 : octets=32 temps<1ms TTL=64
+
+    Statistiques Ping pour 10.105.1.13:
+        Paquets : envoyés = 3, reçus = 3, perdus = 0 (perte 0%),
+    Durée approximative des boucles en millisecondes :
+    Minimum = 0ms, Maximum = 0ms, Moyenne = 0ms
+    ```
+- faire un `ping` manuel vers l'IP de `web.tp6.linux` ne fonctionne pas
+    ```bash
+    PS C:\Users\Utilisateur> ping 10.105.1.11
+
+    Envoi d’une requête 'Ping'  10.105.1.11 avec 32 octets de données :
+    Réponse de 10.105.1.11 : Impossible de joindre le port de destination.
+    Réponse de 10.105.1.11 : Impossible de joindre le port de destination.
+    Réponse de 10.105.1.11 : Impossible de joindre le port de destination.
+
+    Statistiques Ping pour 10.105.1.11:
+    Paquets : envoyés = 3, reçus = 3, perdus = 0 (perte 0%),
+    ```
 
 # II. HTTPS
 
-Le but de cette section est de permettre une connexion chiffrée lorsqu'un client se connecte. Avoir le ptit HTTPS :)
+🌞 **Faire en sorte que NGINX force la connexion en HTTPS plutôt qu'HTTP**
 
 Le principe :
 
@@ -455,10 +514,55 @@ Le principe :
   - une des deux clés sera la clé privée : elle restera sur le serveur et ne bougera jamais
   - l'autre est la clé publique : elle sera stockée dans un fichier appelé *certificat*
     - le *certificat* est donné à chaque client qui se connecte au site
+  ```bash
+  [manon@proxy-tp6-linux ~]$  sudo openssl req -x509 -nodes -day  365 -newkey rsa:2048 -keyout /etc/ssl/private/nginx.key -out /et  ssl/certs/certificate
+  ```
 - on ajuste la conf NGINX
   - on lui indique le chemin vers le certificat et la clé privée afin qu'il puisse les utiliser pour chiffrer le trafic
   - on lui demande d'écouter sur le port convetionnel pour HTTPS : 443 en TCP
+  ```bash
+  [manon@proxy-tp6-linux conf.d]$ cat rproxy.conf
+  server {
+    # On indique le nom que client va saisir pour accéder au service
+    # Pas d'erreur ici, c'est bien le nom de web, et pas de proxy qu'on veut ici !
+    server_name www.nextcloud.tp6;
 
-Je vous laisse Google vous-mêmes "nginx reverse proxy nextcloud" ou ce genre de chose :)
+    # Port d'écoute de NGINX
+    listen 80;
 
-🌞 **Faire en sorte que NGINX force la connexion en HTTPS plutôt qu'HTTP**
+    location / {
+        # On définit des headers HTTP pour que le proxying se passe bien
+        proxy_set_header  Host $host;
+        proxy_set_header  X-Real-IP $remote_addr;
+        proxy_set_header  X-Forwarded-Proto https;
+        proxy_set_header  X-Forwarded-Host $remote_addr;
+        proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # On définit la cible du proxying
+        proxy_pass http://10.105.1.11:80;
+    }
+
+    # Deux sections location recommandés par la doc NextCloud
+    location /.well-known/carddav {
+      return 301 $scheme://$host/remote.php/dav;
+    }
+
+    location /.well-known/caldav {
+      return 301 $scheme://$host/remote.php/dav;
+    }
+
+    listen 443 http2 ssl;
+    listen [::]:443 http2 ssl;
+    ssl_certificate /etc/ssl/certs/certificate;
+    ssl_certificate_key /etc/ssl/private/nginx.key;
+
+  }
+  ```
+```bash
+[manon@proxy-tp6-linux conf.d]$ sudo firewall-cmd --add-port=443/tcp --permanent
+success
+[manon@proxy-tp6-linux conf.d]$ sudo firewall-cmd --reload
+success
+[manon@proxy-tp6-linux conf.d]$ sudo firewall-cmd --list-all | grep ports
+ports: 80/tcp 443/tcp
+```
