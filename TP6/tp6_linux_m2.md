@@ -236,6 +236,23 @@ Feb 12 23:23:35 storage-tp-linux.lab.ingesup systemd[1]: Finished NFS server and
 [manon@web-tp6-linux system]$ sudo mount 10.105.1.14:/srv/nfs_shares/web.tp6.linux/ /srv/backup/
 ```
 - faites en sorte que le dossier soit automatiquement monté quand la machine s'allume
+```bash
+[manon@web-tp6-linux system]$ cat /etc/fstab
+#
+# /etc/fstab
+# Created by anaconda on Thu Oct 13 09:03:58 2022
+#
+# Accessible filesystems, by reference, are maintained under '/dev/disk/'.
+# See man pages fstab(5), findfs(8), mount(8) and/or blkid(8) for more info.
+#
+# After editing this file, run 'systemctl daemon-reload' to update systemd
+# units generated from this file.
+#
+/dev/mapper/rl-root     /                       xfs     defaults        0 0
+UUID=3a82558c-8817-489e-9d0a-42517504a6a7 /boot                   xfs     defaults        0 0
+/dev/mapper/rl-swap     none                    swap    defaults        0 0
+10.105.1.14:/srv/nfs_shares/web.tp6.linux/  /srv/backup/  nfs  defaults  0  0
+```
 
 🌞 **Tester la restauration des données** sinon ça sert à rien :)
 
